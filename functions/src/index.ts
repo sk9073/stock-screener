@@ -113,14 +113,19 @@ function generateFallingTable(stocks: StockDropResult[]): string {
 }
 
 function generateRsiTable(stocks: RsiResult[]): string {
-    const rows = stocks.map(s => `
-        <tr>
+    const rows = stocks.map(s => {
+        const isHighQuality = s.trend === 'OVERSOLD_IN_UPTREND';
+        const rowStyle = isHighQuality ? 'background-color: #d4edda;' : ''; // Light green background
+        const trendLabel = isHighQuality ? `<strong>${s.trend.replace(/_/g, ' ')} ⭐</strong>` : s.trend.replace(/_/g, ' ');
+
+        return `
+        <tr style="${rowStyle}">
             <td><b>${s.symbol}</b></td>
             <td>${s.currentPrice.toFixed(2)}</td>
             <td style="font-weight: bold; color: ${s.trend.startsWith('OVERSOLD') ? 'green' : 'red'};">${s.rsi.toFixed(2)}</td>
-            <td>${s.trend.replace(/_/g, ' ')}</td>
+            <td>${trendLabel}</td>
         </tr>
-    `).join('');
+    `}).join('');
 
     return `
         <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%; border-color: #ddd;">
