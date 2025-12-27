@@ -7,6 +7,10 @@ We used **`yahoo-finance2`** instead of Alpha Vantage because:
 1.  **Alpha Vantage Limit**: The free tier restricts you to **25 requests per day**. Scanning 500 stocks would take 20 days.
 2.  **Efficiency**: Yahoo Finance allows fetching multiple days of history efficiently without strict daily quotas (though general rate limits apply, which our script handles).
 
+## Strategy & Trading Guide
+We have implemented multiple scanning strategies including RSI Reversion and Golden Cross.
+👉 **[Read the Full Trading Guide](TRADING_GUIDE.md)** to understand how to interpret these signals.
+
 ## Setup
 
 1.  **Install Dependencies** (if you haven't already):
