@@ -8,7 +8,7 @@ export interface RsiResult {
     symbol: string;
     rsi: number;
     currentPrice: number;
-    trend: 'OVERSOLD_IN_UPTREND' | 'OVERBOUGHT_IN_DOWNTREND';
+    trend: 'OVERSOLD_IN_UPTREND' | 'OVERBOUGHT_IN_DOWNTREND' | 'OVERSOLD' | 'OVERBOUGHT';
 }
 
 export interface GoldenCrossResult {
@@ -44,9 +44,11 @@ export async function scanRsiStrategy(): Promise<RsiResult[]> {
                 
                 const chartResult = await yahooFinance.chart(symbol, queryOptions);
                 const data = chartResult.quotes as any[];
-                if (!data || data.length < 20) return;
+                // Filter out invalid data points (null closes)
+                const validData = data.filter(d => d.close !== null && d.close !== undefined && d.date);
+                if (validData.length < 20) return;
 
-                const closes = data.map(d => d.close);
+                const closes = validData.map(d => d.close);
                 const inputRSI = {
                     values: closes,
                     period: 14
@@ -59,15 +61,17 @@ export async function scanRsiStrategy(): Promise<RsiResult[]> {
                 // Calculate 200 SMA for Trend Filtering
                 const sma200 = calculateSMA(closes, 200);
                 
-                // We only care about signals that align with the long-term trend
-                if (sma200) {
-                    // Buy Signal: Stock is in an Uptrend (Price > 200 SMA) but temporarily Oversold
-                    if (currentRSI < 30 && currentPrice > sma200) {
-                        results.push({ symbol, rsi: currentRSI, currentPrice, trend: 'OVERSOLD_IN_UPTREND' });
-                    }
-                    // Sell Signal: Stock is in a Downtrend (Price < 200 SMA) but temporarily Overbought
-                    else if (currentRSI > 75 && currentPrice < sma200) {
+                if (currentRSI < 30) {
+                     if (sma200 && currentPrice > sma200) {
+                         results.push({ symbol, rsi: currentRSI, currentPrice, trend: 'OVERSOLD_IN_UPTREND' });
+                     } else {
+                         results.push({ symbol, rsi: currentRSI, currentPrice, trend: 'OVERSOLD' });
+                     }
+                } else if (currentRSI > 75) {
+                    if (sma200 && currentPrice < sma200) {
                         results.push({ symbol, rsi: currentRSI, currentPrice, trend: 'OVERBOUGHT_IN_DOWNTREND' });
+                    } else {
+                        results.push({ symbol, rsi: currentRSI, currentPrice, trend: 'OVERBOUGHT' });
                     }
                 }
 
@@ -107,9 +111,11 @@ export async function scanGoldenCrossStrategy(): Promise<GoldenCrossResult[]> {
                 
                 const chartResult = await yahooFinance.chart(symbol, queryOptions);
                 const data = chartResult.quotes as any[];
-                if (!data || data.length < 201) return;
+                // Filter out invalid data points (null closes)
+                const validData = data.filter(d => d.close !== null && d.close !== undefined && d.date);
+                if (validData.length < 201) return;
 
-                const closes = data.map(d => d.close);
+                const closes = validData.map(d => d.close);
                 
                 // Simple Moving Average Logic
                 const ma50 = calculateSMA(closes, 50);
