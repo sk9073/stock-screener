@@ -143,15 +143,18 @@ function generateRsiTable(stocks: RsiResult[]): string {
 }
 
 function generateGcTable(stocks: GoldenCrossResult[]): string {
-    const rows = stocks.map(s => `
+    const rows = stocks.map(s => {
+        const rsiColor = s.rsi > 70 ? 'red' : 'green';
+        return `
         <tr>
             <td><b>${s.symbol}</b></td>
             <td>${s.currentPrice.toFixed(2)}</td>
+            <td style="font-weight: bold; color: ${rsiColor}">${s.rsi.toFixed(2)}</td>
             <td>${s.ma50.toFixed(2)}</td>
             <td>${s.ma200.toFixed(2)}</td>
             <td style="color: gold; font-weight: bold; background-color: #444;">GOLDEN CROSS</td>
         </tr>
-    `).join('');
+    `}).join('');
 
     return `
         <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%; border-color: #ddd;">
@@ -159,6 +162,7 @@ function generateGcTable(stocks: GoldenCrossResult[]): string {
                 <tr style="background-color: #f2f2f2;">
                     <th>Symbol</th>
                     <th>Price</th>
+                    <th>RSI (14)</th>
                     <th>50 SMA</th>
                     <th>200 SMA</th>
                     <th>Signal</th>

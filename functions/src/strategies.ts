@@ -16,8 +16,11 @@ export interface GoldenCrossResult {
     ma50: number;
     ma200: number;
     currentPrice: number;
+    rsi: number;
     trend: 'GOLDEN_CROSS' | 'DEATH_CROSS' | 'NEUTRAL';
 }
+
+
 
 /**
  * Strategy 1: RSI Reversion
@@ -117,6 +120,14 @@ export async function scanGoldenCrossStrategy(): Promise<GoldenCrossResult[]> {
 
                 const closes = validData.map(d => d.close);
                 
+                // Calculate RSI for Decision Making
+                const inputRSI = {
+                    values: closes,
+                    period: 14
+                };
+                const rsiValues = RSI.calculate(inputRSI);
+                const currentRSI = rsiValues[rsiValues.length - 1];
+
                 // Simple Moving Average Logic
                 const ma50 = calculateSMA(closes, 50);
                 const ma200 = calculateSMA(closes, 200);
@@ -133,6 +144,7 @@ export async function scanGoldenCrossStrategy(): Promise<GoldenCrossResult[]> {
                          ma50, 
                          ma200, 
                          currentPrice: closes[closes.length - 1], 
+                         rsi: currentRSI,
                          trend: 'GOLDEN_CROSS' 
                      });
                 }

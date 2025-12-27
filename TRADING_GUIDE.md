@@ -56,13 +56,22 @@ We use the **Relative Strength Index (RSI 14)** to measure if a stock is "Overbo
 *   **Logic**: **50-day SMA** crosses **ABOVE** the **200-day SMA**.
 *   **Meaning**: Short-term momentum has overpowered long-term inertia. This is a classic **Long-Term Bullish** signal.
 
-### **How to Trade**
+### How to Trade
 *   **Timeframe**: Months to Years.
-*   **Strategy**: Trend Following.
-    1.  **Don't FOMO**: Often the price jumps high to cause the cross.
-    2.  **The Entry**: Wait for the price to pull back and touch the **50 SMA** or **200 SMA**.
-    3.  **Stop Loss**: Close if price falls back below the 200 SMA.
-    4.  **Target**: Ride the trend until the 50 SMA crosses back *below* the 200 SMA ("Death Cross").
+*   **Strategy**: Trend Following (Hybrid Entry).
+
+**New: Use the RSI Column in your email to decide:**
+
+| RSI at Crossover | Scenario | Action |
+| :--- | :--- | :--- |
+| **> 70 (Red)** | Value is exhausted | **WAIT**. 90% chance it pulls back. Set GTT at 50 SMA. |
+| **50 - 65 (Green)** | Steady Rally | **BUY PILOT (30%)**. Add more on dip. |
+| **< 50 (Green)** | Consolidation breakout | **BUY AGGRESSIVE**. Perfect entry. |
+
+#### General Rules:
+1.  **Don't FOMO**: Often the price jumps high to cause the cross.
+2.  **Stop Loss**: Close if price falls back below the 200 SMA.
+3.  **Target**: Ride the trend until the 50 SMA crosses back *below* the 200 SMA ("Death Cross").
 
 ---
 
