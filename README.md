@@ -32,5 +32,23 @@ npx ts-node src/scanner.ts
 To run this daily at 8 AM, you can add a generic cron job:
 
 ```bash
-0 8 * * * cd /path/to/stock-alerts && /usr/local/bin/npx ts-node src/scanner.ts >> scanner.log 2>&1
+
+## Deployment to Firebase Functions
+
+This project includes a Firebase Function to run the scanner daily at 8 AM IST and email the results.
+
+### Prerequisites
+1.  Firebase project initialized.
+2.  SendGrid API Key (stored in Google Cloud Secret Manager as `SENDGRID_API_KEY`).
+3.  Sender email authenticated in SendGrid.
+
+### Deploying
+
+```bash
+cd functions
+npm install
+npm run deploy
 ```
+
+The function `dailyStockScan` will be deployed.
+
