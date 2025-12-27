@@ -42,7 +42,8 @@ export async function scanRsiStrategy(): Promise<RsiResult[]> {
                     interval: '1d' as const
                 };
                 
-                const data = await yahooFinance.historical(symbol, queryOptions) as any[];
+                const chartResult = await yahooFinance.chart(symbol, queryOptions);
+                const data = chartResult.quotes as any[];
                 if (!data || data.length < 20) return;
 
                 const closes = data.map(d => d.close);
@@ -95,7 +96,8 @@ export async function scanGoldenCrossStrategy(): Promise<GoldenCrossResult[]> {
                     interval: '1d' as const
                 };
                 
-                const data = await yahooFinance.historical(symbol, queryOptions) as any[];
+                const chartResult = await yahooFinance.chart(symbol, queryOptions);
+                const data = chartResult.quotes as any[];
                 if (!data || data.length < 201) return;
 
                 const closes = data.map(d => d.close);

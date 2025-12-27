@@ -9,7 +9,7 @@ const sendGridApiKey = defineSecret("SENDGRID_API_KEY");
 
 export const dailyStockScan = onSchedule(
   {
-    schedule: "every day 08:00",
+    schedule: "every monday,tuesday,wednesday,thursday,friday 08:00",
     timeZone: "Asia/Kolkata",
     secrets: [sendGridApiKey],
     timeoutSeconds: 540, // 9 minutes

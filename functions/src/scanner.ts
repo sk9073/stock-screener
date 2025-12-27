@@ -37,7 +37,8 @@ export async function findFallingStocks(): Promise<StockDropResult[]> {
           period2: new Date(),
           interval: '1d' as const, 
         };
-        const result = await yahooFinance.historical(symbol, queryOptions) as any[];
+        const chartResult = await yahooFinance.chart(symbol, queryOptions);
+        const result = chartResult.quotes as any[];
 
         if (!result || result.length < 2) {
             return null; // Not enough data
