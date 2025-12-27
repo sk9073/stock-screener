@@ -8,7 +8,7 @@ export interface RsiResult {
     symbol: string;
     rsi: number;
     currentPrice: number;
-    trend: 'OVERSOLD' | 'OVERBOUGHT' | 'NEUTRAL';
+    trend: 'OVERSOLD_IN_UPTREND' | 'OVERBOUGHT_IN_DOWNTREND';
 }
 
 export interface GoldenCrossResult {
@@ -56,10 +56,19 @@ export async function scanRsiStrategy(): Promise<RsiResult[]> {
                 const currentRSI = rsiValues[rsiValues.length - 1];
                 const currentPrice = closes[closes.length - 1];
 
-                if (currentRSI < 30) {
-                    results.push({ symbol, rsi: currentRSI, currentPrice, trend: 'OVERSOLD' });
-                } else if (currentRSI > 75) {
-                    results.push({ symbol, rsi: currentRSI, currentPrice, trend: 'OVERBOUGHT' });
+                // Calculate 200 SMA for Trend Filtering
+                const sma200 = calculateSMA(closes, 200);
+                
+                // We only care about signals that align with the long-term trend
+                if (sma200) {
+                    // Buy Signal: Stock is in an Uptrend (Price > 200 SMA) but temporarily Oversold
+                    if (currentRSI < 30 && currentPrice > sma200) {
+                        results.push({ symbol, rsi: currentRSI, currentPrice, trend: 'OVERSOLD_IN_UPTREND' });
+                    }
+                    // Sell Signal: Stock is in a Downtrend (Price < 200 SMA) but temporarily Overbought
+                    else if (currentRSI > 75 && currentPrice < sma200) {
+                        results.push({ symbol, rsi: currentRSI, currentPrice, trend: 'OVERBOUGHT_IN_DOWNTREND' });
+                    }
                 }
 
             } catch (err) {

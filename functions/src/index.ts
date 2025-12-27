@@ -117,8 +117,8 @@ function generateRsiTable(stocks: RsiResult[]): string {
         <tr>
             <td><b>${s.symbol}</b></td>
             <td>${s.currentPrice.toFixed(2)}</td>
-            <td style="font-weight: bold; color: ${s.trend === 'OVERSOLD' ? 'green' : 'red'};">${s.rsi.toFixed(2)}</td>
-            <td>${s.trend}</td>
+            <td style="font-weight: bold; color: ${s.trend === 'OVERSOLD_IN_UPTREND' ? 'green' : 'red'};">${s.rsi.toFixed(2)}</td>
+            <td>${s.trend.replace(/_/g, ' ')}</td>
         </tr>
     `).join('');
 
