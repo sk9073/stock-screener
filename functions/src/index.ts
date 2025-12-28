@@ -4,14 +4,17 @@ import { defineSecret } from "firebase-functions/params";
 import sgMail = require("@sendgrid/mail");
 import { findFallingStocks, StockDropResult } from "./scanner";
 import { scanRsiStrategy, scanGoldenCrossStrategy, RsiResult, GoldenCrossResult } from "./strategies";
+import { fetchStockNews, StockNews } from "./news";
+import { getAiAnalysis } from "./ai_analyst";
 
 const sendGridApiKey = defineSecret("SENDGRID_API_KEY");
+const geminiApiKey = defineSecret("GEMINI_API_KEY");
 
 export const dailyStockScan = onSchedule(
   {
     schedule: "every monday,tuesday,wednesday,thursday,friday 08:00",
     timeZone: "Asia/Kolkata",
-    secrets: [sendGridApiKey],
+    secrets: [sendGridApiKey, geminiApiKey],
     timeoutSeconds: 540, // 9 minutes
     memory: "1GiB",
   },
@@ -19,6 +22,7 @@ export const dailyStockScan = onSchedule(
     logger.info("Starting daily stock scan...");
     
     try {
+        // 1. Run Technical Scanners
         const [fallingStocks, rsiStocks, goldenCrossStocks] = await Promise.all([
           findFallingStocks(),
           scanRsiStrategy(),
@@ -32,6 +36,34 @@ export const dailyStockScan = onSchedule(
             return;
         }
 
+        // 2. Gather Unique Symbols of Interest
+        // Prioritize Golden Cross and High-Quality RSI
+        const interestedSymbols = new Set<string>();
+        goldenCrossStocks.forEach(s => interestedSymbols.add(s.symbol));
+        rsiStocks.filter(s => s.trend === 'OVERSOLD_IN_UPTREND').forEach(s => interestedSymbols.add(s.symbol));
+        fallingStocks.forEach(s => interestedSymbols.add(s.symbol));
+        
+        // 3. Fetch News (Limit to top 10 to avoid API rate limits/timeouts)
+        logger.info(`Fetching news for ${interestedSymbols.size} symbols...`);
+        const newsMap: Record<string, StockNews[]> = {};
+        const symbolsArray = Array.from(interestedSymbols).slice(0, 10);
+        
+        for (const sym of symbolsArray) {
+            newsMap[sym] = await fetchStockNews(sym);
+            // Small delay
+            await new Promise(r => setTimeout(r, 100));
+        }
+
+        // 4. Get AI Analysis
+        logger.info("Requesting AI Analysis...");
+        const aiAssessment = await getAiAnalysis(
+            geminiApiKey.value(), 
+            fallingStocks, 
+            rsiStocks, 
+            goldenCrossStocks, 
+            newsMap
+        );
+
         logger.info(`Found ${totalAlerts} total alerts. Sending email...`);
         
         sgMail.setApiKey(sendGridApiKey.value());
@@ -39,8 +71,8 @@ export const dailyStockScan = onSchedule(
         const msg = {
           to: "sivanandi9073@gmail.com",
           from: "smurugesapillai@perchenergy.com",
-          subject: `Stock Alert: ${totalAlerts} Opportunities Found`,
-          html: generateComprehensiveEmail(fallingStocks, rsiStocks, goldenCrossStocks),
+          subject: `Stock Alert: ${totalAlerts} Opportunities Found (+ AI Analysis)`,
+          html: generateComprehensiveEmail(fallingStocks, rsiStocks, goldenCrossStocks, newsMap, aiAssessment),
         };
 
         await sgMail.send(msg);
@@ -55,19 +87,40 @@ export const dailyStockScan = onSchedule(
 function generateComprehensiveEmail(
     falling: StockDropResult[], 
     rsi: RsiResult[], 
-    gc: GoldenCrossResult[]
+    gc: GoldenCrossResult[],
+    newsMap: Record<string, StockNews[]>,
+    aiAnalysis: string
 ): string {
     
     const fallingTable = falling.length ? generateFallingTable(falling) : '<p>No stocks falling >6% detected.</p>';
     const rsiTable = rsi.length ? generateRsiTable(rsi) : '<p>No RSI opportunities detected.</p>';
     const gcTable = gc.length ? generateGcTable(gc) : '<p>No Golden Crosses detected today.</p>';
+    
+    // Generate News Section
+    let newsHtml = '';
+    for (const [sym, items] of Object.entries(newsMap)) {
+        if (items.length > 0) {
+            newsHtml += `<h4>${sym}</h4><ul>`;
+            items.forEach(n => {
+                newsHtml += `<li><a href="${n.link}">${n.title}</a> <span style="font-size:10px; color:#666;">(${n.publisher})</span></li>`;
+            });
+            newsHtml += `</ul>`;
+        }
+    }
+    if (!newsHtml) newsHtml = '<p>No major news found for top picks.</p>';
 
     return `
         <div style="font-family: Arial, sans-serif; color: #333;">
             <h1 style="color: #2c3e50;">Daily Market Scanner Results</h1>
-            <p>Here is your automated improved daily report.</p>
+            <p>Automated Technical + AI Analysis Report</p>
             <hr />
             
+            <div style="background-color: #f0f8ff; padding: 15px; border-radius: 5px; border: 1px solid #bda0e3;">
+                <h2 style="margin-top: 0; color: #4b0082;">🤖 AI Analyst's Pick of the Day</h2>
+                ${aiAnalysis}
+            </div>
+            <br />
+
             <h2 style="color: #c0392b;">1. Falling Knives (>6% Drop)</h2>
             ${fallingTable}
             
@@ -80,7 +133,11 @@ function generateComprehensiveEmail(
             ${gcTable}
             
             <br />
-            <p style="font-size: 12px; color: #777;">Generated by Firebase Cloud Functions. Data from Yahoo Finance.</p>
+            <h2 style="color: #333;">📰 Recent News (Top Picks)</h2>
+            ${newsHtml}
+            
+            <br />
+            <p style="font-size: 12px; color: #777;">Generated by Firebase Cloud Functions + Gemini AI.</p>
         </div>
     `;
 }
