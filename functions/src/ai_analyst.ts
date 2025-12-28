@@ -49,15 +49,24 @@ export async function getAiAnalysis(
             const response = await result.response;
             return response.text();
         } catch (e: any) {
-            // Fallback to gemini-pro if 1.5 flash is not available
-            if (e.toString().includes('404') || e.toString().includes('not found')) {
-                console.warn("Gemini 1.5 Flash not found, falling back to Gemini Pro");
-                model = genAI.getGenerativeModel({ model: "gemini-pro" });
-                const result = await model.generateContent(prompt);
-                const response = await result.response;
-                return response.text();
+            console.warn("Primary model failed, attempting fallback...", e.message);
+            
+            // Fallback 1: gemini-1.5-flash (generic)
+            try {
+                 const modelFallback = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                 const result = await modelFallback.generateContent(prompt);
+                 return result.response.text();
+            } catch (e2) {
+                 // Fallback 2: gemini-pro (legacy)
+                 try {
+                    const modelLegacy = genAI.getGenerativeModel({ model: "gemini-pro" });
+                    const result = await modelLegacy.generateContent(prompt);
+                    return result.response.text();
+                 } catch (e3) {
+                    console.error("All AI models failed:", e3);
+                    return "<p><i>AI Analysis currently unavailable (Model Quota or Region issue). Please check back tomorrow.</i></p>";
+                 }
             }
-            throw e;
         }
 
     } catch (error) {
