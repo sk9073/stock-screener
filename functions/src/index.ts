@@ -40,7 +40,7 @@ export const dailyStockScan = onSchedule(
         // Prioritize Golden Cross and High-Quality RSI
         const interestedSymbols = new Set<string>();
         goldenCrossStocks.forEach(s => interestedSymbols.add(s.symbol));
-        rsiStocks.filter(s => s.trend.startsWith('OVERSOLD')).forEach(s => interestedSymbols.add(s.symbol));
+        rsiStocks.filter(s => s.trend === 'OVERSOLD_IN_UPTREND').forEach(s => interestedSymbols.add(s.symbol));
         fallingStocks.forEach(s => interestedSymbols.add(s.symbol));
         
         // 3. Fetch News (Limit to top 10 to avoid API rate limits/timeouts)
