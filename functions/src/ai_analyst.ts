@@ -13,8 +13,7 @@ export async function getAiAnalysis(
     
     if (!apiKey) return "<p><i>AI Analysis skipped: Missing GEMINI_API_KEY.</i></p>";
 
-    // Construct the prompt object first, then stringify entire payload
-    // This avoids double-serialization issues or string escaping bugs
+    // Construct the prompt object first
     const promptData = {
         falling,
         rsi,
@@ -22,27 +21,31 @@ export async function getAiAnalysis(
         newsMap
     };
 
-    const corePrompt = `
-        You are an expert stock trader. Analyze the following daily screening results for Indian Stocks (NSE):
-        
-        DATA:
-        ${JSON.stringify(promptData)}
+    // Serialize data safely
+    const dataString = JSON.stringify(promptData, null, 2);
 
-        TASK:
-        1. Select the SINGLE BEST stock to trade for today.
-        2. Explain WHY briefly (Technical + News sentiment).
-        3. Provide a clear ACTION plan (Buy Price, Stop Loss, Target).
-        4. Mention 1-2 other honorable mentions.
-        
-        Keep the output concise, professional, and formatted in HTML (use <h3>, <ul>, <b>). 
-        Do not include standard HTML boilerplate (<html>, <body>), just the inner content.
-    `;
+    // Build the prompt text safely
+    // We avoid template literals for the outer JSON structure to prevent breaking the payload
+    const corePrompt = 
+        "You are an expert stock trader. Analyze the following daily screening results for Indian Stocks (NSE):\n\n" +
+        "DATA:\n" + dataString + "\n\n" +
+        "TASK:\n" +
+        "1. Select the SINGLE BEST stock to trade for today.\n" +
+        "2. Explain WHY briefly (Technical + News sentiment).\n" +
+        "3. Provide a clear ACTION plan (Buy Price, Stop Loss, Target).\n" +
+        "4. Mention 1-2 other honorable mentions.\n\n" +
+        "Keep the output concise, professional, and formatted in HTML (use <h3>, <ul>, <b>). \n" +
+        "Do not include standard HTML boilerplate (<html>, <body>), just the inner content.";
 
-    const payload = JSON.stringify({
+    // Directly construct the object to be stringified
+    // This ensures JSON.stringify handles all necessary escaping for the API
+    const apiBody = {
         contents: [{
             parts: [{ text: corePrompt }]
         }]
-    });
+    };
+
+    const payload = JSON.stringify(apiBody);
 
     return new Promise((resolve) => {
         // Use gemini-1.5-flash which is standard and stable via REST
