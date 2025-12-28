@@ -51,7 +51,7 @@ export async function getAiAnalysis(
         // Use gemini-1.5-flash which is standard and stable via REST
         const options = {
             hostname: 'generativelanguage.googleapis.com',
-            path: `/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+            path: `/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
