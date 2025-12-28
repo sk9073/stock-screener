@@ -5,7 +5,7 @@ import sgMail = require("@sendgrid/mail");
 import { findFallingStocks, StockDropResult } from "./scanner";
 import { scanRsiStrategy, scanGoldenCrossStrategy, RsiResult, GoldenCrossResult } from "./strategies";
 import { fetchStockNews, StockNews } from "./news";
-// import { getAiAnalysis } from "./ai_analyst";
+import { getAiAnalysis } from "./ai_analyst";
 
 const sendGridApiKey = defineSecret("SENDGRID_API_KEY");
 const geminiApiKey = defineSecret("GEMINI_API_KEY");
@@ -56,7 +56,6 @@ export const dailyStockScan = onSchedule(
 
         // 4. Get AI Analysis
         logger.info("Requesting AI Analysis...");
-        /*
         const aiAssessment = await getAiAnalysis(
             geminiApiKey.value(), 
             fallingStocks, 
@@ -64,8 +63,6 @@ export const dailyStockScan = onSchedule(
             goldenCrossStocks, 
             newsMap
         );
-        */
-       const aiAssessment = "<p><i>AI Analysis temporarily disabled while refining news source.</i></p>";
 
         logger.info(`Found ${totalAlerts} total alerts. Sending email...`);
         

@@ -16,8 +16,8 @@ export async function getAiAnalysis(
     try {
 
         const genAI = new GoogleGenerativeAI(apiKey);
-        // Try specific version first
-        let model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-001" });
+        // Try generic latest first (most likely to exist)
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         const prompt = `
         You are an expert stock trader. Analyze the following daily screening results for Indian Stocks (NSE):
@@ -51,21 +51,14 @@ export async function getAiAnalysis(
         } catch (e: any) {
             console.warn("Primary model failed, attempting fallback...", e.message);
             
-            // Fallback 1: gemini-1.5-flash (generic)
+            // Fallback 1: gemini-pro (Standard)
             try {
-                 const modelFallback = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                 const modelFallback = genAI.getGenerativeModel({ model: "gemini-pro" });
                  const result = await modelFallback.generateContent(prompt);
                  return result.response.text();
             } catch (e2) {
-                 // Fallback 2: gemini-pro (legacy)
-                 try {
-                    const modelLegacy = genAI.getGenerativeModel({ model: "gemini-pro" });
-                    const result = await modelLegacy.generateContent(prompt);
-                    return result.response.text();
-                 } catch (e3) {
-                    console.error("All AI models failed:", e3);
-                    return "<p><i>AI Analysis currently unavailable (Model Quota or Region issue). Please check back tomorrow.</i></p>";
-                 }
+                 console.error("All AI models failed:", e2);
+                 return "<p><i>AI Analysis currently unavailable (Model Access Issue). Please checks logs.</i></p>";
             }
         }
 
