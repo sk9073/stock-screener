@@ -55,7 +55,7 @@ export async function getAiAnalysis(
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Content-Length': payload.length
+                'Content-Length': Buffer.byteLength(payload)
             }
         };
 
