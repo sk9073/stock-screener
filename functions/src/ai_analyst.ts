@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import * as https from 'https';
 import { StockDropResult } from "./scanner";
 import { RsiResult, GoldenCrossResult } from "./strategies";
 import { StockNews } from "./news";
@@ -13,13 +13,7 @@ export async function getAiAnalysis(
     
     if (!apiKey) return "<p><i>AI Analysis skipped: Missing GEMINI_API_KEY.</i></p>";
 
-    try {
-
-        const genAI = new GoogleGenerativeAI(apiKey);
-        // Try generic latest first (most likely to exist)
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-        const prompt = `
+    const promptText = `
         You are an expert stock trader. Analyze the following daily screening results for Indian Stocks (NSE):
 
         1. FALLING STOCKS (>6% Drop):
@@ -42,28 +36,52 @@ export async function getAiAnalysis(
         
         Keep the output concise, professional, and formatted in HTML (use <h3>, <ul>, <b>). 
         Do not include standard HTML boilerplate (<html>, <body>), just the inner content.
-        `;
+    `;
 
-        try {
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
-            return response.text();
-        } catch (e: any) {
-            console.warn("Primary model failed, attempting fallback...", e.message);
-            
-            // Fallback 1: gemini-pro (Standard)
-            try {
-                 const modelFallback = genAI.getGenerativeModel({ model: "gemini-pro" });
-                 const result = await modelFallback.generateContent(prompt);
-                 return result.response.text();
-            } catch (e2) {
-                 console.error("All AI models failed:", e2);
-                 return "<p><i>AI Analysis currently unavailable (Model Access Issue). Please checks logs.</i></p>";
+    // Direct REST API payload
+    const payload = JSON.stringify({
+        contents: [{
+            parts: [{ text: promptText }]
+        }]
+    });
+
+    return new Promise((resolve) => {
+        // Use gemini-1.5-flash which is standard and stable via REST
+        const options = {
+            hostname: 'generativelanguage.googleapis.com',
+            path: `/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': payload.length
             }
-        }
+        };
 
-    } catch (error) {
-        console.error("AI Analysis Failed:", error);
-        return "<p><i>AI Analysis failed due to an error.</i></p>";
-    }
+        const req = https.request(options, (res) => {
+            let data = '';
+            res.on('data', (chunk) => data += chunk);
+            res.on('end', () => {
+                try {
+                    const json = JSON.parse(data);
+                    if (json.candidates && json.candidates[0] && json.candidates[0].content) {
+                        resolve(json.candidates[0].content.parts[0].text);
+                    } else {
+                        console.error("AI API Error Response:", data);
+                        resolve("<p><i>AI Analysis unavailable (API Error).</i></p>");
+                    }
+                } catch (e) {
+                    console.error("AI Parse Error:", e);
+                    resolve("<p><i>AI Analysis unavailable (Parse Error).</i></p>");
+                }
+            });
+        });
+
+        req.on('error', (e) => {
+            console.error("AI Request Failed:", e);
+            resolve("<p><i>AI Analysis unavailable (Network Error).</i></p>");
+        });
+
+        req.write(payload);
+        req.end();
+    });
 }
