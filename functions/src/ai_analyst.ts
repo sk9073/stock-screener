@@ -35,7 +35,7 @@ export async function getAiAnalysis(
         ${JSON.stringify(newsMap)}
 
         TASK:
-        1. Select the SINGLE BEST stock to trade for tomorrow.
+        1. Select the SINGLE BEST stock to trade for today.
         2. Explain WHY briefly (Technical + News sentiment).
         3. Provide a clear ACTION plan (Buy Price, Stop Loss, Target).
         4. Mention 1-2 other honorable mentions.
