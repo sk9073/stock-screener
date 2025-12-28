@@ -14,10 +14,11 @@ export async function getAiAnalysis(
     if (!apiKey) return "<p><i>AI Analysis skipped: Missing GEMINI_API_KEY.</i></p>";
 
     try {
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-        // Prepare the prompt
+        const genAI = new GoogleGenerativeAI(apiKey);
+        // Try specific version first
+        let model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-001" });
+
         const prompt = `
         You are an expert stock trader. Analyze the following daily screening results for Indian Stocks (NSE):
 
@@ -43,9 +44,21 @@ export async function getAiAnalysis(
         Do not include standard HTML boilerplate (<html>, <body>), just the inner content.
         `;
 
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        return response.text();
+        try {
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            return response.text();
+        } catch (e: any) {
+            // Fallback to gemini-pro if 1.5 flash is not available
+            if (e.toString().includes('404') || e.toString().includes('not found')) {
+                console.warn("Gemini 1.5 Flash not found, falling back to Gemini Pro");
+                model = genAI.getGenerativeModel({ model: "gemini-pro" });
+                const result = await model.generateContent(prompt);
+                const response = await result.response;
+                return response.text();
+            }
+            throw e;
+        }
 
     } catch (error) {
         console.error("AI Analysis Failed:", error);
