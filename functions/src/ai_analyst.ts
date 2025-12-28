@@ -13,20 +13,20 @@ export async function getAiAnalysis(
     
     if (!apiKey) return "<p><i>AI Analysis skipped: Missing GEMINI_API_KEY.</i></p>";
 
-    const promptText = `
+    // Construct the prompt object first, then stringify entire payload
+    // This avoids double-serialization issues or string escaping bugs
+    const promptData = {
+        falling,
+        rsi,
+        gc,
+        newsMap
+    };
+
+    const corePrompt = `
         You are an expert stock trader. Analyze the following daily screening results for Indian Stocks (NSE):
-
-        1. FALLING STOCKS (>6% Drop):
-        ${JSON.stringify(falling)}
-
-        2. RSI OPPORTUNITIES:
-        ${JSON.stringify(rsi)}
-
-        3. GOLDEN CROSS (Bullish Reversal):
-        ${JSON.stringify(gc)}
-
-        4. RELEVANT NEWS:
-        ${JSON.stringify(newsMap)}
+        
+        DATA:
+        ${JSON.stringify(promptData)}
 
         TASK:
         1. Select the SINGLE BEST stock to trade for today.
@@ -38,10 +38,9 @@ export async function getAiAnalysis(
         Do not include standard HTML boilerplate (<html>, <body>), just the inner content.
     `;
 
-    // Direct REST API payload
     const payload = JSON.stringify({
         contents: [{
-            parts: [{ text: promptText }]
+            parts: [{ text: corePrompt }]
         }]
     });
 
