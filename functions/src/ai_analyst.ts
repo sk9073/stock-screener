@@ -30,7 +30,7 @@ export async function getAiAnalysis(
         "You are an expert stock trader. Analyze the following daily screening results for Indian Stocks (NSE):\n\n" +
         "DATA:\n" + dataString + "\n\n" +
         "TASK:\n" +
-        "1. Select the SINGLE BEST stock to trade for today.\n" +
+        "1. Select the SINGLE BEST stock in each category to do intraday and swing trading for today.\n" +
         "2. Explain WHY briefly (Technical + News sentiment).\n" +
         "3. Provide a clear ACTION plan (Buy Price, Stop Loss, Target).\n" +
         "4. Mention 1-2 other honorable mentions.\n\n" +

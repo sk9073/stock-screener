@@ -39,9 +39,9 @@ export const dailyStockScan = onSchedule(
         // 2. Gather Unique Symbols of Interest
         // Prioritize Golden Cross and High-Quality RSI
         const interestedSymbols = new Set<string>();
-        goldenCrossStocks.forEach(s => interestedSymbols.add(s.symbol));
-        rsiStocks.filter(s => s.trend === 'OVERSOLD_IN_UPTREND').forEach(s => interestedSymbols.add(s.symbol));
         fallingStocks.forEach(s => interestedSymbols.add(s.symbol));
+        rsiStocks.filter(s => s.trend === 'OVERSOLD_IN_UPTREND').forEach(s => interestedSymbols.add(s.symbol));
+        goldenCrossStocks.forEach(s => interestedSymbols.add(s.symbol));
         
         // 3. Fetch News (Limit to top 10 to avoid API rate limits/timeouts)
         logger.info(`Fetching news for ${interestedSymbols.size} symbols...`);
@@ -102,7 +102,7 @@ function generateComprehensiveEmail(
         if (items.length > 0) {
             newsHtml += `<h4>${sym}</h4><ul>`;
             items.forEach(n => {
-                newsHtml += `<li><a href="${n.link}">${n.title}</a> <span style="font-size:10px; color:#666;">(${n.publisher})</span></li>`;
+                newsHtml += `<li><a href="${n.link}">${n.title}</a> <span style="font-size:10px; color:#666;">(${n.publisher} - ${n.time})</span></li>`;
             });
             newsHtml += `</ul>`;
         }
