@@ -1,58 +1,61 @@
-# NSE 500 Stock Drop Scanner
+# Intelligent NSE Stock Screener + AI Analyst
 
-This tool scans a list of NSE 500 stocks to identify those that have fallen by **-6% or more** over the last 6 days.
+An automated stock screening system that runs daily on the cloud. It scans 500+ NSE stocks for technical setups, scrapes relevant financial news, and uses **Gemini 2.0 Flash AI** to generate a professional trading plan.
 
-## Why Yahoo Finance?
-We used **`yahoo-finance2`** instead of Alpha Vantage because:
-1.  **Alpha Vantage Limit**: The free tier restricts you to **25 requests per day**. Scanning 500 stocks would take 20 days.
-2.  **Efficiency**: Yahoo Finance allows fetching multiple days of history efficiently without strict daily quotas (though general rate limits apply, which our script handles).
+## ✨ Features
+1.  **Technical Scanners**:
+    *   📉 **Falling Knife**: Stocks down >6% in a week (Potential bounces).
+    *   ⚡ **RSI Reversion**: High-quality oversold stocks in an uptrend.
+    *   🌟 **Golden Cross**: Bullish trend reversal (50 SMA crosses above 200 SMA).
+2.  **Deep News Scraping**:
+    *   Automatically finds the top recent news for shortlisted stocks.
+    *   Reads the *full article content* (not just headlines) to understand sentiment.
+3.  **AI Hedge Fund Analyst**:
+    *   Powered by Google's **Gemini 2.0 Flash**.
+    *   Analyzes the confluence of Technicals + Fundamentals + News.
+    *   Outputs a clear **Action Plan** (Buy Price, Stop Loss, Target).
+4.  **Email Alerts**:
+    *   Sends a comprehensive HTML report to your inbox every morning at 8:00 AM IST.
 
-## Strategy & Trading Guide
-We have implemented multiple scanning strategies including RSI Reversion and Golden Cross.
-👉 **[Read the Full Trading Guide](TRADING_GUIDE.md)** to understand how to interpret these signals.
+## 🚀 Architecture
+*   **Backend**: Firebase Cloud Functions (Node.js).
+*   **Scheduling**: Google Cloud Scheduler (runs Mon-Fri at 8:00 AM IST).
+*   **Data Sources**: 
+    *   `yahoo-finance2` (Price Data).
+    *   `google-news-rss` + `cheerio` (News & Article Scraping).
+*   **AI Engine**: Gemini 2.0 Flash (via direct REST API).
+*   **Notifications**: SendGrid Email API.
 
-## Setup
+## 🛠️ Setup & Deployment
 
-1.  **Install Dependencies** (if you haven't already):
+1.  **Dependencies**:
     ```bash
+    cd functions
     npm install
     ```
 
-2.  **Define Your Stocks**:
-    - Edit `src/tickers.ts`.
-    - You can download the full NIFTY 500 list from the [NSE Website](https://www.nseindia.com/products-services/indices-nifty500-index).
-    - Ensure symbols have the `.NS` suffix (e.g., `RELIANCE.NS`).
+2.  **Environment Secrets**:
+    This project uses Google Cloud Secret Manager for security.
+    *   `SENDGRID_API_KEY`: For sending emails.
+    *   `GEMINI_API_KEY`: For AI analysis.
 
-## Running the Scanner
+3.  **Local Testing**:
+    ```bash
+    cd functions
+    npm run shell
+    # Inside the shell:
+    dailyStockScan()
+    ```
 
-Run the script using `ts-node`:
+4.  **Deployment**:
+    ```bash
+    cd functions
+    firebase deploy --only functions
+    ```
 
-```bash
-npx ts-node src/scanner.ts
-```
+## 📈 Trading Guide
+We have implemented multiple scanning strategies.
+👉 **[Read the Full Trading Guide](TRADING_GUIDE.md)** to understand how to interpret the AI's signals.
 
-## Scheduling (Mac/Linux)
-
-To run this daily at 8 AM, you can add a generic cron job:
-
-```bash
-
-## Deployment to Firebase Functions
-
-This project includes a Firebase Function to run the scanner daily at 8 AM IST and email the results.
-
-### Prerequisites
-1.  Firebase project initialized.
-2.  SendGrid API Key (stored in Google Cloud Secret Manager as `SENDGRID_API_KEY`).
-3.  Sender email authenticated in SendGrid.
-
-### Deploying
-
-```bash
-cd functions
-npm install
-npm run deploy
-```
-
-The function `dailyStockScan` will be deployed.
+Note: This tool is for informational purposes only. Trading stocks involves risk.
 
